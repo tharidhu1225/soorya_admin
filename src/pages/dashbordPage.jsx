@@ -5,33 +5,48 @@ import { FaUtensils, FaShoppingCart } from "react-icons/fa";
 export default function Dashboard() {
   const [dateTime, setDateTime] = useState(new Date());
   const [todayMenu, setTodayMenu] = useState([]);
+  const [menuCount, setMenuCount] = useState(0);
+
   const API = import.meta.env.VITE_BACKEND_URI;
 
   const stats = [
-    { title: "Menu Items", value: 58, icon: <FaUtensils />, color: "text-pink-400" },
-    { title: "Orders", value: "Coming Soon", icon: <FaShoppingCart />, color: "text-yellow-400" },
+    {
+      title: "Menu Items",
+      value: menuCount,
+      icon: <FaUtensils />,
+      color: "text-pink-400",
+    },
+    {
+      title: "Orders",
+      value: "Coming Soon",
+      icon: <FaShoppingCart />,
+      color: "text-yellow-400",
+    },
   ];
 
-  // 🔥 FETCH TODAY SPECIAL MENU
-  const fetchTodayMenu = async () => {
-  try {
-    const res = await axios.get(`${API}/api/menu`);
+  // 🔥 FETCH ALL MENU + COUNT + SPECIAL
+  const fetchData = async () => {
+    try {
+      const res = await axios.get(`${API}/api/menu`);
 
-    const today = new Date().toDateString();
+      const allMenu = res.data;
 
-    const filtered = res.data.filter((item) => {
-      const itemDate = new Date(item.createdAt).toDateString();
-      return itemDate === today;
-    });
+      // menu count
+      setMenuCount(allMenu.length);
 
-    setTodayMenu(filtered);
-  } catch (err) {
-    console.log(err);
-  }
-};
+      // special menu only
+      const specialOnly = allMenu.filter(
+        (item) => item.isSpecial === true
+      );
+
+      setTodayMenu(specialOnly);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   useEffect(() => {
-    fetchTodayMenu();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -92,7 +107,7 @@ export default function Dashboard() {
 
       </div>
 
-      {/* TODAY MENU */}
+      {/* TODAY SPECIAL MENU */}
       <div>
         <h2 className="text-2xl md:text-3xl font-bold text-white mb-5">
           🍽 Today Special Menu
@@ -103,31 +118,38 @@ export default function Dashboard() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            {todayMenu.map((item) => (
-              <div
-                key={item._id}
-                className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden"
-              >
-                <img
-                  src={item.images?.[0]}
-                  className="w-full h-44 object-cover"
-                />
+            {todayMenu.map((item) => {
+              const price =
+                item.prices?.large?.discountedPrice ??
+                item.prices?.large?.originalPrice ??
+                0;
 
-                <div className="p-5">
-                  <h3 className="text-lg font-bold text-white">
-                    {item.Title}
-                  </h3>
+              return (
+                <div
+                  key={item._id}
+                  className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden"
+                >
+                  <img
+                    src={item.images?.[0]}
+                    className="w-full h-44 object-cover"
+                  />
 
-                  <p className="text-yellow-400 font-semibold mt-1">
-                    Rs {item.price}
-                  </p>
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold text-white">
+                      {item.title}
+                    </h3>
 
-                  <button className="mt-4 w-full py-2 rounded-xl bg-yellow-500/20 text-yellow-400">
-                    View Details
-                  </button>
+                    <p className="text-yellow-400 font-semibold mt-1">
+                      Rs {price}
+                    </p>
+
+                    <button className="mt-4 w-full py-2 rounded-xl bg-yellow-500/20 text-yellow-400">
+                      View Details
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
           </div>
         )}
