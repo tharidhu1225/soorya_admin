@@ -31,7 +31,7 @@ export default function MenuPage() {
     fetchMenu();
   }, []);
 
-  // DELETE MENU
+  // DELETE
   const handleDelete = async (id) => {
     try {
       await axios.delete(`${API}/api/menu/${id}`);
@@ -43,17 +43,19 @@ export default function MenuPage() {
     }
   };
 
-  // 🔥 SAFE PRICE HANDLER (FIX ALL ISSUES)
-  const normalizePrice = (price) => {
-    if (!price) return 0;
+  // SAFE PRICE EXTRACTOR (🔥 MAIN FIX)
+  const getPrice = (priceObj) => {
+    if (!priceObj) return 0;
 
-    if (typeof price === "object") {
-      return (
-        Number(price.discountedPrice ?? price.originalPrice ?? 0) || 0
+    if (typeof priceObj === "object") {
+      return Number(
+        priceObj.discountedPrice ??
+        priceObj.originalPrice ??
+        0
       );
     }
 
-    return Number(price) || 0;
+    return Number(priceObj) || 0;
   };
 
   const filtered = menuItems.filter((item) =>
@@ -89,11 +91,11 @@ export default function MenuPage() {
       />
 
       {/* LOADING */}
-{loading && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-    <LoadingScreen />
-  </div>
-)}
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
+          <LoadingScreen />
+        </div>
+      )}
 
       {/* EMPTY */}
       {!loading && filtered.length === 0 && (
@@ -106,13 +108,12 @@ export default function MenuPage() {
       <div className="grid md:grid-cols-3 gap-6">
 
         {filtered.map((item) => {
-          const largePrice = normalizePrice(item.prices?.large);
-          const discount = Number(item.discount || 0);
+          const prices = item.prices || {};
 
-          const finalPrice =
-            discount > 0
-              ? (largePrice - (largePrice * discount) / 100).toFixed(0)
-              : largePrice;
+          const originalPrice = getPrice(prices.large?.originalPrice ?? prices.large);
+          const discountedPrice = getPrice(prices.large?.discountedPrice);
+
+          const discount = Number(item.discount || 0);
 
           return (
             <div
@@ -146,17 +147,17 @@ export default function MenuPage() {
                   {item.description}
                 </p>
 
-                {/* PRICE */}
+                {/* PRICE (🔥 FIXED PROPER DISPLAY) */}
                 <div className="flex items-center gap-2 mt-2">
 
                   {discount > 0 ? (
                     <>
                       <span className="line-through text-gray-500">
-                        Rs.{largePrice}
+                        Rs.{originalPrice}
                       </span>
 
                       <span className="text-green-400 font-bold text-lg">
-                        Rs.{finalPrice}
+                        Rs.{discountedPrice}
                       </span>
 
                       <span className="bg-red-500 text-xs px-2 py-1 rounded-full">
@@ -165,7 +166,7 @@ export default function MenuPage() {
                     </>
                   ) : (
                     <span className="text-yellow-400 font-bold text-lg">
-                      Rs.{largePrice}
+                      Rs.{originalPrice}
                     </span>
                   )}
                 </div>
