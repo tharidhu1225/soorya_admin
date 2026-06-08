@@ -340,7 +340,7 @@ export default function AddMenuPage() {
           >
             <option value="Lunch">Lunch</option>
             <option value="Dinner">Dinner</option>
-            <option value="Breakfast">Lunch & Dinner</option>
+            <option value="Lunch & Dinner">Lunch & Dinner</option>
           </select>
 
           {/* SPECIAL MENU */}
