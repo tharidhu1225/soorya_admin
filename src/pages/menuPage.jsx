@@ -12,6 +12,7 @@ export default function MenuPage() {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [availabilityLoading, setAvailabilityLoading] = useState(null);
 
   // FETCH MENU
   const fetchMenu = async () => {
@@ -44,20 +45,33 @@ export default function MenuPage() {
     }
   };
   
-  const handleAvailability = async (id, value) => { 
-    try { 
-      await axios.put( `${API}/api/menu/${id}/availability`,
-       { isAvailable: value, 
+  const handleAvailability = async (id, value) => {
+  try {
+    setAvailabilityLoading(id);
 
-       } );
-        setMenuItems((prev) => prev.map((item) => item._id === id ? 
-        { ...item, isAvailable: value } : item ) ); toast.success("Availability Updated"); 
+    await axios.put(
+      `${API}/api/menu/${id}/availability`,
+      {
+        isAvailable: value,
       }
-         catch (err) { 
-          console.log(err); toast.error("Update Failed"); 
-        } 
-  
-  };
+    );
+
+    setMenuItems((prev) =>
+      prev.map((item) =>
+        item._id === id
+          ? { ...item, isAvailable: value }
+          : item
+      )
+    );
+
+    toast.success("Availability Updated");
+  } catch (err) {
+    console.log(err);
+    toast.error("Update Failed");
+  } finally {
+    setAvailabilityLoading(null);
+  }
+};
 
   // SAFE PRICE EXTRACTOR (🔥 MAIN FIX)
   const getPrice = (priceObj) => {
@@ -77,6 +91,8 @@ export default function MenuPage() {
   const filtered = menuItems.filter((item) =>
     item.title?.toLowerCase().includes(search.toLowerCase())
   );
+
+  
 
   return (
 
@@ -141,18 +157,22 @@ export default function MenuPage() {
             </td>
 
             <td className="p-3">
-              <input
-                type="checkbox"
-                checked={item.isAvailable}
-                onChange={(e) =>
-                  handleAvailability(
-                    item._id,
-                    e.target.checked
-                  )
-                }
-                className="w-5 h-5 accent-green-500 cursor-pointer"
-              />
-            </td>
+  {availabilityLoading === item._id ? (
+    <div className="w-5 h-5 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+  ) : (
+    <input
+      type="checkbox"
+      checked={item.isAvailable}
+      onChange={(e) =>
+        handleAvailability(
+          item._id,
+          e.target.checked
+        )
+      }
+      className="w-5 h-5 accent-green-500 cursor-pointer"
+    />
+  )}
+</td>
 
             <td className="p-3">
               <button
