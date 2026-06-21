@@ -45,7 +45,8 @@ export default function MenuPage() {
   };
   
   const handleAvailability = async (id, value) => { 
-    try { await axios.patch( `${API}/api/menu/${id}/availability`,
+    try { 
+      await axios.put( `${API}/api/menu/${id}/availability`,
        { isAvailable: value, 
 
        } );
