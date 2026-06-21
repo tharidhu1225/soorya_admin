@@ -19,6 +19,7 @@ export default function MenuPage() {
       setLoading(true);
       const res = await axios.get(`${API}/api/menu`);
       setMenuItems(res.data);
+      console.log(res.data);
     } catch (err) {
       console.log(err);
       toast.error("Failed to load menu");
@@ -42,6 +43,20 @@ export default function MenuPage() {
       toast.error("Delete failed");
     }
   };
+  
+  const handleAvailability = async (id, value) => { 
+    try { await axios.patch( `${API}/api/menu/${id}/availability`,
+       { isAvailable: value, 
+
+       } );
+        setMenuItems((prev) => prev.map((item) => item._id === id ? 
+        { ...item, isAvailable: value } : item ) ); toast.success("Availability Updated"); 
+      }
+         catch (err) { 
+          console.log(err); toast.error("Update Failed"); 
+        } 
+  
+  };
 
   // SAFE PRICE EXTRACTOR (🔥 MAIN FIX)
   const getPrice = (priceObj) => {
@@ -63,135 +78,97 @@ export default function MenuPage() {
   );
 
   return (
-    <div className="p-4 space-y-6 text-white">
 
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-yellow-400">
-            🍽 Menu Items
-          </h1>
-          <p className="text-gray-400">Manage restaurant menu</p>
-        </div>
+<div className="overflow-x-auto bg-white/5 border border-white/10 rounded-2xl">
+  <table className="w-full text-left">
+    <thead className="bg-yellow-500 text-black">
+      <tr>
+        <th className="p-3">Image</th>
+        <th className="p-3">Title</th>
+        <th className="p-3">Category</th>
+        <th className="p-3">Price</th>
+        <th className="p-3">Special</th>
+        <th className="p-3">Available</th>
+        <th className="p-3">Action</th>
+      </tr>
+    </thead>
 
-        <button
-          onClick={() => navigate("/addmenu")}
-          className="bg-yellow-500 text-black px-5 py-2 rounded-xl font-bold flex items-center gap-2"
-        >
-          <FaPlus /> Add Menu
-        </button>
-      </div>
+    <tbody>
+      {filtered.map((item) => {
+        const prices = item.prices || {};
 
-      {/* SEARCH */}
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search menu..."
-        className="w-full p-3 rounded-xl bg-black/40 border border-gray-700"
-      />
+        const originalPrice = getPrice(
+          prices.large?.originalPrice ??
+          prices.large
+        );
 
-      {/* LOADING */}
-      {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
-          <LoadingScreen />
-        </div>
-      )}
+        return (
+          <tr
+            key={item._id}
+            className="border-b border-white/10 hover:bg-white/5"
+          >
+            <td className="p-3">
+              <img
+                src={item.images?.[0]}
+                alt={item.title}
+                className="w-16 h-16 object-cover rounded-lg"
+              />
+            </td>
 
-      {/* EMPTY */}
-      {!loading && filtered.length === 0 && (
-        <div className="text-center text-gray-400 py-20">
-          No items found 🍽
-        </div>
-      )}
+            <td className="p-3 font-semibold">
+              {item.title}
+            </td>
 
-      {/* GRID */}
-      <div className="grid md:grid-cols-3 gap-6">
+            <td className="p-3">
+              {item.category?.Cat}
+            </td>
 
-        {filtered.map((item) => {
-          const prices = item.prices || {};
+            <td className="p-3 text-yellow-400 font-bold">
+              Rs.{originalPrice}
+            </td>
 
-          const originalPrice = getPrice(prices.large?.originalPrice ?? prices.large);
-          const discountedPrice = getPrice(prices.large?.discountedPrice);
+            <td className="p-3">
+              {item.isSpecial ? (
+                <span className="text-yellow-400">
+                  ⭐ Yes
+                </span>
+              ) : (
+                <span className="text-gray-400">
+                  No
+                </span>
+              )}
+            </td>
 
-          const discount = Number(item.discount || 0);
+            <td className="p-3">
+              <input
+                type="checkbox"
+                checked={item.isAvailable}
+                onChange={(e) =>
+                  handleAvailability(
+                    item._id,
+                    e.target.checked
+                  )
+                }
+                className="w-5 h-5 accent-green-500 cursor-pointer"
+              />
+            </td>
 
-          return (
-            <div
-              key={item._id}
-              className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:scale-[1.02] transition"
-            >
+            <td className="p-3">
+              <button
+                onClick={() =>
+                  handleDelete(item._id)
+                }
+                className="bg-red-500/20 text-red-400 px-3 py-2 rounded-lg"
+              >
+                <FaTrash />
+              </button>
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</div>
 
-              {/* IMAGE */}
-              <div className="relative">
-                <img
-                  src={item.images?.[0]}
-                  className="w-full h-52 object-cover"
-                  alt={item.title}
-                />
-
-                {item.isSpecial && (
-                  <div className="absolute top-3 left-3 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs flex items-center gap-1">
-                    <FaStar /> Special
-                  </div>
-                )}
-              </div>
-
-              {/* CONTENT */}
-              <div className="p-4 space-y-2">
-
-                <h2 className="text-xl font-bold">
-                  {item.title}
-                </h2>
-
-                <p className="text-gray-400 text-sm">
-                  {item.description}
-                </p>
-
-                {/* PRICE (🔥 FIXED PROPER DISPLAY) */}
-                <div className="flex items-center gap-2 mt-2">
-
-                  {discount > 0 ? (
-                    <>
-                      <span className="line-through text-gray-500">
-                        Rs.{originalPrice}
-                      </span>
-
-                      <span className="text-green-400 font-bold text-lg">
-                        Rs.{discountedPrice}
-                      </span>
-
-                      <span className="bg-red-500 text-xs px-2 py-1 rounded-full">
-                        -{discount}%
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-yellow-400 font-bold text-lg">
-                      Rs.{originalPrice}
-                    </span>
-                  )}
-                </div>
-
-                {/* CATEGORY */}
-                <div className="text-sm text-gray-400 flex justify-between">
-                  <span>{item.category?.Cat}</span>
-                  <span>{item.subCategory}</span>
-                </div>
-
-                {/* DELETE */}
-                <button
-                  onClick={() => handleDelete(item._id)}
-                  className="w-full mt-3 bg-red-500/20 text-red-300 py-2 rounded-xl"
-                >
-                  <FaTrash className="inline mr-2" />
-                  Delete
-                </button>
-
-              </div>
-            </div>
-          );
-        })}
-
-      </div>
-    </div>
   );
 }
