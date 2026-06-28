@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { BsGraphUp } from "react-icons/bs";
-import { MdOutlineRestaurantMenu } from "react-icons/md";
+import { MdAssignmentAdd, MdOutlineRestaurantMenu } from "react-icons/md";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
 import { FiLogOut, FiSettings } from "react-icons/fi";
 import Dashboard from "./dashbordPage";
@@ -91,6 +91,19 @@ export default function HomePage() {
           >
             <BsGraphUp />
             Dashboard
+          </Link>
+
+          <Link
+            onClick={() => setOpen(false)}
+            to="/addmenu"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
+              location.pathname.includes("/addmenu")
+                ? "bg-yellow-500/20 text-yellow-400"
+                : "hover:bg-white/10"
+            }`}
+          >
+            <MdAssignmentAdd />
+            Add Menu
           </Link>
 
           <Link
